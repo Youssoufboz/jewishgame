@@ -278,7 +278,7 @@ class DinoGame {
     }
     
     setupEventListeners() {
-        // Keyboard controls
+        // Keyboard controls for desktop
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
@@ -296,64 +296,21 @@ class DinoGame {
             }
         });
         
-        // Touch controls for mobile - add multiple event types for better compatibility
-        this.canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.handleTouchStart(e);
-        }, { passive: false });
-        
-        this.canvas.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.handleTouchEnd(e);
-        }, { passive: false });
-        
-        // Also handle touchcancel for mobile
-        this.canvas.addEventListener('touchcancel', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.handleTouchEnd(e);
-        }, { passive: false });
-        
-        // Mouse controls as backup
-        this.canvas.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            this.handleMouseDown(e);
-        });
-        
-        this.canvas.addEventListener('mouseup', (e) => {
-            e.preventDefault();
-            this.handleMouseUp(e);
-        });
-        
         this.restartIcon.addEventListener('click', () => {
             this.restartGame();
         });
         
-        // Add visual feedback for touch on mobile
-        if ('ontouchstart' in window) {
-            this.canvas.style.cursor = 'pointer';
-        }
-        
-        // Mobile control buttons
-        this.setupMobileButtons();
+        // Simple mobile buttons only - no canvas touch events
+        this.setupSimpleMobileButtons();
     }
     
-    setupMobileButtons() {
+    setupSimpleMobileButtons() {
         const jumpBtn = document.getElementById('jumpBtn');
         const duckBtn = document.getElementById('duckBtn');
         
         if (jumpBtn) {
-            jumpBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                console.log('Jump button pressed');
-                this.handleJump();
-            });
-            
-            jumpBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                console.log('Jump button clicked');
+            jumpBtn.addEventListener('click', () => {
+                console.log('JUMP button clicked');
                 this.handleJump();
             });
         }
@@ -361,23 +318,21 @@ class DinoGame {
         if (duckBtn) {
             duckBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                console.log('Duck button pressed');
+                console.log('DUCK button pressed');
                 this.handleDuck(true);
             });
             
             duckBtn.addEventListener('touchend', (e) => {
                 e.preventDefault();
-                console.log('Duck button released');
+                console.log('DUCK button released');
                 this.handleDuck(false);
             });
             
-            duckBtn.addEventListener('mousedown', (e) => {
-                e.preventDefault();
+            duckBtn.addEventListener('mousedown', () => {
                 this.handleDuck(true);
             });
             
-            duckBtn.addEventListener('mouseup', (e) => {
-                e.preventDefault();
+            duckBtn.addEventListener('mouseup', () => {
                 this.handleDuck(false);
             });
         }
@@ -397,83 +352,6 @@ class DinoGame {
     handleDuck(isDucking) {
         if (this.gameState === 'playing') {
             this.dino.isDucking = isDucking;
-        }
-    }
-    
-    handleTouchStart(e) {
-        try {
-            console.log('Touch start detected');
-            this.touchStartTime = Date.now();
-            
-            // Clear any existing timer
-            if (this.touchTimer) {
-                clearTimeout(this.touchTimer);
-            }
-            
-            // Set timer for long press (duck)
-            this.touchTimer = setTimeout(() => {
-                console.log('Long press - duck');
-                if (this.gameState === 'playing') {
-                    this.handleDuck(true);
-                }
-            }, 200);
-            
-            // Add visual feedback
-            this.canvas.style.opacity = '0.8';
-            this.canvas.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-        } catch (error) {
-            console.log('Touch start error:', error);
-        }
-    }
-    
-    handleTouchEnd(e) {
-        try {
-            console.log('Touch end detected');
-            // Clear the timer
-            if (this.touchTimer) {
-                clearTimeout(this.touchTimer);
-                this.touchTimer = null;
-            }
-            
-            // Restore visual feedback
-            this.canvas.style.opacity = '1';
-            this.canvas.style.backgroundColor = 'transparent';
-            
-            // Calculate touch duration
-            const touchDuration = Date.now() - this.touchStartTime;
-            console.log('Touch duration:', touchDuration);
-            
-            // Stop ducking
-            this.handleDuck(false);
-            
-            // Short tap - jump
-            if (touchDuration < 200) {
-                console.log('Short tap - jump');
-                this.handleJump();
-            }
-        } catch (error) {
-            console.log('Touch end error:', error);
-        }
-    }
-    
-    handleMouseDown(e) {
-        this.mouseDownTime = Date.now();
-        this.mouseTimer = setTimeout(() => {
-            // Long press - duck
-            this.handleDuck(true);
-        }, 200);
-    }
-    
-    handleMouseUp(e) {
-        clearTimeout(this.mouseTimer);
-        const mouseDuration = Date.now() - this.mouseDownTime;
-        
-        // Stop ducking
-        this.handleDuck(false);
-        
-        // Short click - jump
-        if (mouseDuration < 200) {
-            this.handleJump();
         }
     }
     

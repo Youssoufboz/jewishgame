@@ -152,51 +152,77 @@ body {
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    display: none;
+    display: flex;
     gap: 20px;
     z-index: 10;
 }
 
 .jump-btn, .duck-btn {
-    padding: 15px 30px;
-    font-size: 1.2em;
+    padding: 20px 40px;
+    font-size: 1.4em;
     font-weight: bold;
     border: none;
-    border-radius: 25px;
+    border-radius: 30px;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
+    min-width: 120px;
 }
 
 .jump-btn {
-    background: #4CAF50;
+    background: linear-gradient(135deg, #4CAF50, #45a049);
     color: white;
 }
 
 .jump-btn:active {
-    background: #45a049;
+    background: linear-gradient(135deg, #45a049, #3d8b40);
     transform: scale(0.95);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .duck-btn {
-    background: #2196F3;
+    background: linear-gradient(135deg, #2196F3, #1976D2);
     color: white;
 }
 
 .duck-btn:active {
-    background: #1976D2;
+    background: linear-gradient(135deg, #1976D2, #1565C0);
     transform: scale(0.95);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #ff6b35;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: bold;
+    z-index: 15;
 }
 
 @media (max-width: 768px) {
-    .mobile-controls {
-        display: flex;
+    .controls-info {
+        display: none;
     }
     
-    .controls-info {
+    .mobile-indicator {
+        display: block;
+    }
+}
+
+@media (min-width: 769px) {
+    .mobile-controls {
+        display: none;
+    }
+    
+    .mobile-indicator {
         display: none;
     }
 }
