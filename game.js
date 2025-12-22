@@ -78,55 +78,81 @@ class DinoGame {
         this.ctx.imageSmoothingEnabled = false;
         this.ctx.imageSmoothingQuality = 'high';
         
-        // Set responsive canvas size
-        this.setupResponsiveCanvas();
+        // Mobile debugging
+        this.isMobileDevice = window.innerWidth <= 768 || 'ontouchstart' in window;
+        console.log('Mobile device detected:', this.isMobileDevice);
+        console.log('Screen size:', window.innerWidth, 'x', window.innerHeight);
+        console.log('Touch support:', 'ontouchstart' in window);
         
-        this.gameLoop();
+        // Show mobile status
+        const mobileStatus = document.getElementById('mobileStatus');
+        if (mobileStatus) {
+            mobileStatus.style.display = this.isMobileDevice ? 'inline' : 'none';
+        }
+        
+        // Set responsive canvas size with delay to ensure DOM is ready
+        setTimeout(() => {
+            this.setupResponsiveCanvas();
+            this.gameLoop();
+        }, 100);
     }
     
     setupResponsiveCanvas() {
-        // Get the game area dimensions
-        const gameArea = this.canvas.parentElement;
-        const gameAreaWidth = gameArea.clientWidth;
-        const gameAreaHeight = gameArea.clientHeight;
-        
-        // Calculate aspect ratio (3:1 for desktop, adjust for mobile)
-        const isMobile = window.innerWidth <= 768;
-        const aspectRatio = isMobile ? 2.5 : 3;
-        
-        // Calculate canvas size based on available space
-        let canvasWidth, canvasHeight;
-        
-        if (isMobile) {
-            // For mobile, use most of the screen width
-            canvasWidth = Math.min(gameAreaWidth - 40, 800);
-            canvasHeight = canvasWidth / aspectRatio;
+        try {
+            // Get the game area dimensions
+            const gameArea = this.canvas.parentElement;
+            const gameAreaWidth = gameArea.clientWidth || window.innerWidth - 40;
+            const gameAreaHeight = gameArea.clientHeight || window.innerHeight - 200;
             
-            // Ensure it fits in the game area
-            if (canvasHeight > gameAreaHeight - 40) {
-                canvasHeight = gameAreaHeight - 40;
-                canvasWidth = canvasHeight * aspectRatio;
+            // Calculate aspect ratio (3:1 for desktop, adjust for mobile)
+            const isMobile = window.innerWidth <= 768 || 'ontouchstart' in window;
+            const aspectRatio = isMobile ? 2.5 : 3;
+            
+            // Calculate canvas size based on available space
+            let canvasWidth, canvasHeight;
+            
+            if (isMobile) {
+                // For mobile, use most of the screen width
+                canvasWidth = Math.min(gameAreaWidth - 20, 800);
+                canvasHeight = canvasWidth / aspectRatio;
+                
+                // Ensure it fits in the game area
+                if (canvasHeight > gameAreaHeight - 20) {
+                    canvasHeight = gameAreaHeight - 20;
+                    canvasWidth = canvasHeight * aspectRatio;
+                }
+            } else {
+                // For desktop, use fixed size with max constraints
+                canvasWidth = Math.min(gameAreaWidth - 40, 1200);
+                canvasHeight = canvasWidth / aspectRatio;
             }
-        } else {
-            // For desktop, use fixed size with max constraints
-            canvasWidth = Math.min(gameAreaWidth - 40, 1200);
-            canvasHeight = canvasWidth / aspectRatio;
+            
+            // Set canvas dimensions
+            this.canvas.width = canvasWidth;
+            this.canvas.height = canvasHeight;
+            
+            // Store scale factor for game logic
+            this.scaleFactor = canvasWidth / 1200;
+            
+            // Adjust game elements for mobile
+            if (isMobile) {
+                this.adjustGameForMobile();
+            }
+            
+            // Handle window resize (debounced for mobile)
+            if (this.resizeTimeout) {
+                clearTimeout(this.resizeTimeout);
+            }
+            this.resizeTimeout = setTimeout(() => {
+                this.setupResponsiveCanvas();
+            }, 250);
+        } catch (error) {
+            console.log('Canvas setup error:', error);
+            // Fallback to default size
+            this.canvas.width = 800;
+            this.canvas.height = 320;
+            this.scaleFactor = 0.67;
         }
-        
-        // Set canvas dimensions
-        this.canvas.width = canvasWidth;
-        this.canvas.height = canvasHeight;
-        
-        // Store scale factor for game logic
-        this.scaleFactor = canvasWidth / 1200;
-        
-        // Adjust game elements for mobile
-        if (isMobile) {
-            this.adjustGameForMobile();
-        }
-        
-        // Handle window resize
-        window.addEventListener('resize', () => this.setupResponsiveCanvas());
     }
     
     adjustGameForMobile() {
@@ -270,16 +296,25 @@ class DinoGame {
             }
         });
         
-        // Touch controls for mobile
+        // Touch controls for mobile - add multiple event types for better compatibility
         this.canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             this.handleTouchStart(e);
-        });
+        }, { passive: false });
         
         this.canvas.addEventListener('touchend', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             this.handleTouchEnd(e);
-        });
+        }, { passive: false });
+        
+        // Also handle touchcancel for mobile
+        this.canvas.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.handleTouchEnd(e);
+        }, { passive: false });
         
         // Mouse controls as backup
         this.canvas.addEventListener('mousedown', (e) => {
@@ -295,6 +330,11 @@ class DinoGame {
         this.restartIcon.addEventListener('click', () => {
             this.restartGame();
         });
+        
+        // Add visual feedback for touch on mobile
+        if ('ontouchstart' in window) {
+            this.canvas.style.cursor = 'pointer';
+        }
     }
     
     handleJump() {
@@ -315,23 +355,51 @@ class DinoGame {
     }
     
     handleTouchStart(e) {
-        this.touchStartTime = Date.now();
-        this.touchTimer = setTimeout(() => {
-            // Long press - duck
-            this.handleDuck(true);
-        }, 200);
+        try {
+            this.touchStartTime = Date.now();
+            
+            // Clear any existing timer
+            if (this.touchTimer) {
+                clearTimeout(this.touchTimer);
+            }
+            
+            // Set timer for long press (duck)
+            this.touchTimer = setTimeout(() => {
+                if (this.gameState === 'playing') {
+                    this.handleDuck(true);
+                }
+            }, 200);
+            
+            // Add visual feedback
+            this.canvas.style.opacity = '0.8';
+        } catch (error) {
+            console.log('Touch start error:', error);
+        }
     }
     
     handleTouchEnd(e) {
-        clearTimeout(this.touchTimer);
-        const touchDuration = Date.now() - this.touchStartTime;
-        
-        // Stop ducking
-        this.handleDuck(false);
-        
-        // Short tap - jump
-        if (touchDuration < 200) {
-            this.handleJump();
+        try {
+            // Clear the timer
+            if (this.touchTimer) {
+                clearTimeout(this.touchTimer);
+                this.touchTimer = null;
+            }
+            
+            // Restore visual feedback
+            this.canvas.style.opacity = '1';
+            
+            // Calculate touch duration
+            const touchDuration = Date.now() - this.touchStartTime;
+            
+            // Stop ducking
+            this.handleDuck(false);
+            
+            // Short tap - jump
+            if (touchDuration < 200) {
+                this.handleJump();
+            }
+        } catch (error) {
+            console.log('Touch end error:', error);
         }
     }
     
