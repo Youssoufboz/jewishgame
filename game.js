@@ -300,42 +300,26 @@ class DinoGame {
             this.restartGame();
         });
         
-        // Simple mobile buttons only - no canvas touch events
-        this.setupSimpleMobileButtons();
+        // Simple global touch events like Chrome Dino
+        this.setupChromeStyleMobileControls();
     }
     
-    setupSimpleMobileButtons() {
-        const jumpBtn = document.getElementById('jumpBtn');
-        const duckBtn = document.getElementById('duckBtn');
+    setupChromeStyleMobileControls() {
+        // Global touch listener - tap anywhere to jump
+        document.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            console.log('Touch detected - jumping');
+            this.handleJump();
+        }, { passive: false });
         
-        if (jumpBtn) {
-            jumpBtn.addEventListener('click', () => {
-                console.log('JUMP button clicked');
+        // Also handle click events for desktop testing
+        document.addEventListener('click', (e) => {
+            // Only handle clicks on game area, not buttons
+            if (e.target.closest('.game-area') && !e.target.closest('button')) {
+                console.log('Click detected - jumping');
                 this.handleJump();
-            });
-        }
-        
-        if (duckBtn) {
-            duckBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                console.log('DUCK button pressed');
-                this.handleDuck(true);
-            });
-            
-            duckBtn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                console.log('DUCK button released');
-                this.handleDuck(false);
-            });
-            
-            duckBtn.addEventListener('mousedown', () => {
-                this.handleDuck(true);
-            });
-            
-            duckBtn.addEventListener('mouseup', () => {
-                this.handleDuck(false);
-            });
-        }
+            }
+        });
     }
     
     handleJump() {
