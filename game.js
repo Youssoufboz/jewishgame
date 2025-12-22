@@ -104,35 +104,36 @@ class DinoGame {
             const gameAreaWidth = gameArea.clientWidth || window.innerWidth - 40;
             const gameAreaHeight = gameArea.clientHeight || window.innerHeight - 200;
             
-            // Calculate aspect ratio (3:1 for desktop, adjust for mobile)
+            // Check if mobile
             const isMobile = window.innerWidth <= 768 || 'ontouchstart' in window;
-            const aspectRatio = isMobile ? 2.5 : 3;
             
-            // Calculate canvas size based on available space
             let canvasWidth, canvasHeight;
             
             if (isMobile) {
-                // For mobile, use most of the screen width
-                canvasWidth = Math.min(gameAreaWidth - 20, 800);
-                canvasHeight = canvasWidth / aspectRatio;
+                // Mobile: Use most of screen width with better aspect ratio
+                canvasWidth = Math.min(gameAreaWidth - 20, window.innerWidth - 40);
+                canvasHeight = Math.min(canvasWidth * 0.4, gameAreaHeight - 100); // 2.5:1 ratio but constrained by height
                 
-                // Ensure it fits in the game area
-                if (canvasHeight > gameAreaHeight - 20) {
-                    canvasHeight = gameAreaHeight - 20;
-                    canvasWidth = canvasHeight * aspectRatio;
-                }
+                // Ensure minimum size for playability
+                if (canvasWidth < 300) canvasWidth = 300;
+                if (canvasHeight < 150) canvasHeight = 150;
+                
+                // Scale factor for mobile
+                this.scaleFactor = canvasWidth / 1200;
+                
+                console.log('Mobile canvas:', canvasWidth, 'x', canvasHeight, 'scale:', this.scaleFactor);
             } else {
-                // For desktop, use fixed size with max constraints
-                canvasWidth = Math.min(gameAreaWidth - 40, 1200);
-                canvasHeight = canvasWidth / aspectRatio;
+                // Desktop: Keep original size (1200x400)
+                canvasWidth = 1200;
+                canvasHeight = 400;
+                this.scaleFactor = 1;
+                
+                console.log('Desktop canvas:', canvasWidth, 'x', canvasHeight);
             }
             
             // Set canvas dimensions
             this.canvas.width = canvasWidth;
             this.canvas.height = canvasHeight;
-            
-            // Store scale factor for game logic
-            this.scaleFactor = canvasWidth / 1200;
             
             // Adjust game elements for mobile
             if (isMobile) {
@@ -149,19 +150,23 @@ class DinoGame {
         } catch (error) {
             console.log('Canvas setup error:', error);
             // Fallback to default size
-            this.canvas.width = 800;
-            this.canvas.height = 320;
-            this.scaleFactor = 0.67;
+            this.canvas.width = 1200;
+            this.canvas.height = 400;
+            this.scaleFactor = 1;
         }
     }
     
     adjustGameForMobile() {
-        // Adjust game speed and positions for mobile
-        this.gameSpeed = 6 * this.scaleFactor;
+        const scaleFactor = this.scaleFactor;
         
-        // Adjust dino position
-        this.dino.x = 50 * this.scaleFactor;
+        // Adjust game speed for mobile (slightly slower for better mobile experience)
+        this.gameSpeed = 5 * scaleFactor;
+        
+        // Adjust dino position and size
+        this.dino.x = 50 * scaleFactor;
         this.dino.y = (this.canvas.height - 50);
+        this.dino.width = 60 * scaleFactor;
+        this.dino.height = 70 * scaleFactor;
         
         // Adjust ground and cloud positions
         this.groundLines.forEach(line => {
@@ -170,7 +175,15 @@ class DinoGame {
         
         this.clouds.forEach(cloud => {
             cloud.y = Math.random() * (this.canvas.height * 0.2) + 20;
+            cloud.width = 60 * scaleFactor;
+            cloud.height = 20 * scaleFactor;
         });
+        
+        // Adjust jump power for mobile screen size
+        this.jumpPower = -12 * scaleFactor;
+        this.gravity = 0.8 * scaleFactor;
+        
+        console.log('Mobile game adjusted with scale factor:', scaleFactor);
     }
     
     loadSprites() {
