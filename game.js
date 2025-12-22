@@ -335,6 +335,52 @@ class DinoGame {
         if ('ontouchstart' in window) {
             this.canvas.style.cursor = 'pointer';
         }
+        
+        // Mobile control buttons
+        this.setupMobileButtons();
+    }
+    
+    setupMobileButtons() {
+        const jumpBtn = document.getElementById('jumpBtn');
+        const duckBtn = document.getElementById('duckBtn');
+        
+        if (jumpBtn) {
+            jumpBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                console.log('Jump button pressed');
+                this.handleJump();
+            });
+            
+            jumpBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Jump button clicked');
+                this.handleJump();
+            });
+        }
+        
+        if (duckBtn) {
+            duckBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                console.log('Duck button pressed');
+                this.handleDuck(true);
+            });
+            
+            duckBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                console.log('Duck button released');
+                this.handleDuck(false);
+            });
+            
+            duckBtn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                this.handleDuck(true);
+            });
+            
+            duckBtn.addEventListener('mouseup', (e) => {
+                e.preventDefault();
+                this.handleDuck(false);
+            });
+        }
     }
     
     handleJump() {
@@ -356,6 +402,7 @@ class DinoGame {
     
     handleTouchStart(e) {
         try {
+            console.log('Touch start detected');
             this.touchStartTime = Date.now();
             
             // Clear any existing timer
@@ -365,6 +412,7 @@ class DinoGame {
             
             // Set timer for long press (duck)
             this.touchTimer = setTimeout(() => {
+                console.log('Long press - duck');
                 if (this.gameState === 'playing') {
                     this.handleDuck(true);
                 }
@@ -372,6 +420,7 @@ class DinoGame {
             
             // Add visual feedback
             this.canvas.style.opacity = '0.8';
+            this.canvas.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
         } catch (error) {
             console.log('Touch start error:', error);
         }
@@ -379,6 +428,7 @@ class DinoGame {
     
     handleTouchEnd(e) {
         try {
+            console.log('Touch end detected');
             // Clear the timer
             if (this.touchTimer) {
                 clearTimeout(this.touchTimer);
@@ -387,15 +437,18 @@ class DinoGame {
             
             // Restore visual feedback
             this.canvas.style.opacity = '1';
+            this.canvas.style.backgroundColor = 'transparent';
             
             // Calculate touch duration
             const touchDuration = Date.now() - this.touchStartTime;
+            console.log('Touch duration:', touchDuration);
             
             // Stop ducking
             this.handleDuck(false);
             
             // Short tap - jump
             if (touchDuration < 200) {
+                console.log('Short tap - jump');
                 this.handleJump();
             }
         } catch (error) {
@@ -957,6 +1010,15 @@ class DinoGame {
         // Clear canvas
         this.ctx.fillStyle = '#f7f7f7';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Debug: Draw canvas size info
+        if (this.frameCount < 60) {
+            this.ctx.fillStyle = '#333';
+            this.ctx.font = '16px Arial';
+            this.ctx.fillText(`Canvas: ${this.canvas.width}x${this.canvas.height}`, 10, 30);
+            this.ctx.fillText(`Mobile: ${this.isMobileDevice}`, 10, 50);
+            this.ctx.fillText(`Scale: ${this.scaleFactor}`, 10, 70);
+        }
         
         // Draw game elements
         this.drawClouds();

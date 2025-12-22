@@ -147,6 +147,60 @@ body {
     font-weight: 500;
 }
 
+.mobile-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    gap: 20px;
+    z-index: 10;
+}
+
+.jump-btn, .duck-btn {
+    padding: 15px 30px;
+    font-size: 1.2em;
+    font-weight: bold;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.jump-btn {
+    background: #4CAF50;
+    color: white;
+}
+
+.jump-btn:active {
+    background: #45a049;
+    transform: scale(0.95);
+}
+
+.duck-btn {
+    background: #2196F3;
+    color: white;
+}
+
+.duck-btn:active {
+    background: #1976D2;
+    transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+    .mobile-controls {
+        display: flex;
+    }
+    
+    .controls-info {
+        display: none;
+    }
+}
+
 @media (max-width: 768px) {
     .game-header {
         padding: 15px 20px;
