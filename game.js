@@ -78,11 +78,73 @@ class DinoGame {
         this.ctx.imageSmoothingEnabled = false;
         this.ctx.imageSmoothingQuality = 'high';
         
-        // Set actual canvas size
-        this.canvas.width = 1200;
-        this.canvas.height = 400;
+        // Set responsive canvas size
+        this.setupResponsiveCanvas();
         
         this.gameLoop();
+    }
+    
+    setupResponsiveCanvas() {
+        // Get the game area dimensions
+        const gameArea = this.canvas.parentElement;
+        const gameAreaWidth = gameArea.clientWidth;
+        const gameAreaHeight = gameArea.clientHeight;
+        
+        // Calculate aspect ratio (3:1 for desktop, adjust for mobile)
+        const isMobile = window.innerWidth <= 768;
+        const aspectRatio = isMobile ? 2.5 : 3;
+        
+        // Calculate canvas size based on available space
+        let canvasWidth, canvasHeight;
+        
+        if (isMobile) {
+            // For mobile, use most of the screen width
+            canvasWidth = Math.min(gameAreaWidth - 40, 800);
+            canvasHeight = canvasWidth / aspectRatio;
+            
+            // Ensure it fits in the game area
+            if (canvasHeight > gameAreaHeight - 40) {
+                canvasHeight = gameAreaHeight - 40;
+                canvasWidth = canvasHeight * aspectRatio;
+            }
+        } else {
+            // For desktop, use fixed size with max constraints
+            canvasWidth = Math.min(gameAreaWidth - 40, 1200);
+            canvasHeight = canvasWidth / aspectRatio;
+        }
+        
+        // Set canvas dimensions
+        this.canvas.width = canvasWidth;
+        this.canvas.height = canvasHeight;
+        
+        // Store scale factor for game logic
+        this.scaleFactor = canvasWidth / 1200;
+        
+        // Adjust game elements for mobile
+        if (isMobile) {
+            this.adjustGameForMobile();
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => this.setupResponsiveCanvas());
+    }
+    
+    adjustGameForMobile() {
+        // Adjust game speed and positions for mobile
+        this.gameSpeed = 6 * this.scaleFactor;
+        
+        // Adjust dino position
+        this.dino.x = 50 * this.scaleFactor;
+        this.dino.y = (this.canvas.height - 50);
+        
+        // Adjust ground and cloud positions
+        this.groundLines.forEach(line => {
+            line.y = this.canvas.height - 3;
+        });
+        
+        this.clouds.forEach(cloud => {
+            cloud.y = Math.random() * (this.canvas.height * 0.2) + 20;
+        });
     }
     
     loadSprites() {
@@ -190,6 +252,7 @@ class DinoGame {
     }
     
     setupEventListeners() {
+        // Keyboard controls
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
@@ -205,6 +268,28 @@ class DinoGame {
                 e.preventDefault();
                 this.handleDuck(false);
             }
+        });
+        
+        // Touch controls for mobile
+        this.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.handleTouchStart(e);
+        });
+        
+        this.canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.handleTouchEnd(e);
+        });
+        
+        // Mouse controls as backup
+        this.canvas.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            this.handleMouseDown(e);
+        });
+        
+        this.canvas.addEventListener('mouseup', (e) => {
+            e.preventDefault();
+            this.handleMouseUp(e);
         });
         
         this.restartIcon.addEventListener('click', () => {
@@ -226,6 +311,48 @@ class DinoGame {
     handleDuck(isDucking) {
         if (this.gameState === 'playing') {
             this.dino.isDucking = isDucking;
+        }
+    }
+    
+    handleTouchStart(e) {
+        this.touchStartTime = Date.now();
+        this.touchTimer = setTimeout(() => {
+            // Long press - duck
+            this.handleDuck(true);
+        }, 200);
+    }
+    
+    handleTouchEnd(e) {
+        clearTimeout(this.touchTimer);
+        const touchDuration = Date.now() - this.touchStartTime;
+        
+        // Stop ducking
+        this.handleDuck(false);
+        
+        // Short tap - jump
+        if (touchDuration < 200) {
+            this.handleJump();
+        }
+    }
+    
+    handleMouseDown(e) {
+        this.mouseDownTime = Date.now();
+        this.mouseTimer = setTimeout(() => {
+            // Long press - duck
+            this.handleDuck(true);
+        }, 200);
+    }
+    
+    handleMouseUp(e) {
+        clearTimeout(this.mouseTimer);
+        const mouseDuration = Date.now() - this.mouseDownTime;
+        
+        // Stop ducking
+        this.handleDuck(false);
+        
+        // Short click - jump
+        if (mouseDuration < 200) {
+            this.handleJump();
         }
     }
     
@@ -310,21 +437,23 @@ class DinoGame {
     }
     
     createGroundLines() {
+        const scaleFactor = this.scaleFactor || 1;
         for (let i = 0; i < 35; i++) {
             this.groundLines.push({
-                x: i * 40,
-                y: 400
+                x: i * 40 * scaleFactor,
+                y: this.canvas.height - 3
             });
         }
     }
     
     createClouds() {
+        const scaleFactor = this.scaleFactor || 1;
         for (let i = 0; i < 3; i++) {
             this.clouds.push({
-                x: Math.random() * 800 + 200,
-                y: Math.random() * 80 + 20,
-                width: 60,
-                height: 20,
+                x: Math.random() * (this.canvas.width * 0.8) + (this.canvas.width * 0.2),
+                y: Math.random() * (this.canvas.height * 0.2) + 20,
+                width: 60 * scaleFactor,
+                height: 20 * scaleFactor,
                 speed: Math.random() * 0.5 + 0.2
             });
         }
@@ -356,26 +485,30 @@ class DinoGame {
             const type = types[Math.floor(Math.random() * types.length)];
             
             let obstacle = {
-                x: 1100,
+                x: this.canvas.width - 100,
                 type: type,
                 passed: false
             };
             
+            const groundY = this.canvas.height - 3;
+            const scaleFactor = this.scaleFactor || 1;
+            
             switch(type) {
                 case 'cactus':
-                    obstacle.y = 365; // 400 - 25 height = 365 (bottom touches ground)
-                    obstacle.width = 25;
-                    obstacle.height = 25;
+                    obstacle.y = groundY - 25 * scaleFactor;
+                    obstacle.width = 25 * scaleFactor;
+                    obstacle.height = 25 * scaleFactor;
                     break;
                 case 'cactus-large':
-                    obstacle.y = 365; // 400 - 20 height = 365 (bottom touches ground)
-                    obstacle.width = 25;
-                    obstacle.height = 20;
+                    obstacle.y = groundY - 20 * scaleFactor;
+                    obstacle.width = 25 * scaleFactor;
+                    obstacle.height = 20 * scaleFactor;
                     break;
                 case 'bird':
-                    obstacle.y = Math.random() < 0.5 ? 250 : 280;
-                    obstacle.width = 50;
-                    obstacle.height = 35;
+                    obstacle.y = Math.random() < 0.5 ? 
+                        (this.canvas.height * 0.4) : (this.canvas.height * 0.5);
+                    obstacle.width = 50 * scaleFactor;
+                    obstacle.height = 35 * scaleFactor;
                     obstacle.animationFrame = 0;
                     break;
             }
@@ -396,21 +529,24 @@ class DinoGame {
                 this.scoreElement.textContent = this.score;
                 
                 if (this.score % 10 === 0) {
-                    this.gameSpeed += 0.5;
+                    this.gameSpeed += 0.5 * this.scaleFactor;
                 }
             }
             
-            return obstacle.x > -50;
+            return obstacle.x > -50 * this.scaleFactor;
         });
     }
     
     updateCoins() {
         if (this.frameCount % 80 === 0 && Math.random() < 0.4) {
+            const scaleFactor = this.scaleFactor || 1;
+            const groundY = this.canvas.height - 3;
             this.coins.push({
-                x: 1100,
-                y: Math.random() < 0.5 ? 280 : 320,
-                width: 20,
-                height: 20,
+                x: this.canvas.width - 100,
+                y: Math.random() < 0.5 ? 
+                    (groundY - 120 * scaleFactor) : (groundY - 80 * scaleFactor),
+                width: 20 * scaleFactor,
+                height: 20 * scaleFactor,
                 collected: false,
                 animationFrame: Math.floor(Math.random() * 20)
             });
@@ -419,7 +555,7 @@ class DinoGame {
         this.coins = this.coins.filter(coin => {
             coin.x -= this.gameSpeed;
             coin.animationFrame = (coin.animationFrame + 1) % 20;
-            return coin.x > -30;
+            return coin.x > -30 * this.scaleFactor;
         });
     }
     
@@ -427,9 +563,9 @@ class DinoGame {
         this.clouds.forEach(cloud => {
             cloud.x -= cloud.speed;
             
-            if (cloud.x < -100) {
-                cloud.x = 1000 + Math.random() * 200;
-                cloud.y = Math.random() * 80 + 20;
+            if (cloud.x < -100 * this.scaleFactor) {
+                cloud.x = this.canvas.width + Math.random() * (200 * this.scaleFactor);
+                cloud.y = Math.random() * (this.canvas.height * 0.2) + 20;
             }
         });
     }
@@ -438,8 +574,8 @@ class DinoGame {
         this.groundLines.forEach(line => {
             line.x -= this.gameSpeed;
             
-            if (line.x < -40) {
-                line.x = 1100;
+            if (line.x < -40 * this.scaleFactor) {
+                line.x = this.canvas.width;
             }
         });
     }
@@ -730,12 +866,12 @@ class DinoGame {
     drawGround() {
         // Simple clean ground line
         this.ctx.fillStyle = '#8b7355';
-        this.ctx.fillRect(0, 400, 1200, 3);
+        this.ctx.fillRect(0, this.canvas.height - 3, this.canvas.width, 3);
         
         // Simple ground texture
         this.ctx.fillStyle = '#6b5a45';
-        for (let i = 0; i < 1200; i += 30) {
-            this.ctx.fillRect(i, 398, 20, 2);
+        for (let i = 0; i < this.canvas.width; i += 30 * this.scaleFactor) {
+            this.ctx.fillRect(i, this.canvas.height - 5, 20 * this.scaleFactor, 2);
         }
         
         // Moving ground lines
@@ -744,7 +880,7 @@ class DinoGame {
         this.groundLines.forEach(line => {
             this.ctx.beginPath();
             this.ctx.moveTo(line.x, line.y);
-            this.ctx.lineTo(line.x + 20, line.y);
+            this.ctx.lineTo(line.x + 20 * this.scaleFactor, line.y);
             this.ctx.stroke();
         });
     }
@@ -752,7 +888,7 @@ class DinoGame {
     draw() {
         // Clear canvas
         this.ctx.fillStyle = '#f7f7f7';
-        this.ctx.fillRect(0, 0, 1200, 400);
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         // Draw game elements
         this.drawClouds();

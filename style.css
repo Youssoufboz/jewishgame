@@ -127,13 +127,15 @@ body {
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 30px;
-    font-size: 1em;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 0.9em;
     color: #666;
     background: rgba(255, 255, 255, 0.9);
     padding: 15px 25px;
     border-radius: 25px;
     border: 1px solid #e0e0e0;
+    text-align: center;
 }
 
 .controls-info p {
@@ -167,8 +169,15 @@ body {
     }
     
     .controls-info {
-        gap: 20px;
-        font-size: 0.9em;
+        gap: 8px;
+        font-size: 0.8em;
         padding: 10px 20px;
+        bottom: 10px;
+        max-width: 90%;
+    }
+    
+    .controls-info p {
+        margin: 0;
+        line-height: 1.2;
     }
 }
