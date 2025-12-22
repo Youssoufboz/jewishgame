@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dinosaur Runner Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-header">
+        <h1>DINO RUNNER</h1>
+        <div class="score-display">
+            <span id="score">0</span>
+            <span class="high-score">HI: <span id="highScore">0</span></span>
+        </div>
+    </div>
+    
+    <div class="game-area">
+        <canvas id="gameCanvas" width="1200" height="400"></canvas>
+        <div class="game-overlay" id="gameOverlay">
+            <div class="game-message">
+                <h2 id="messageTitle">Press SPACE to Start</h2>
+                <p id="messageText">Jump over obstacles and survive!</p>
+            </div>
+        </div>
+        <div class="restart-icon" id="restartIcon">
+            <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+                <circle cx="30" cy="30" r="30" fill="#333"/>
+                <path d="M20 30C20 24.5 24.5 20 30 20C35.5 20 40 24.5 40 30C40 35.5 35.5 40 30 40C28 40 26 39.5 24.5 38.5" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                <path d="M24.5 23L20 30L27 30" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+    </div>
+    
+    <div class="controls-info">
+        <p><strong>SPACE:</strong> Jump</p>
+        <p><strong>↓:</strong> Duck</p>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html>
