@@ -110,13 +110,21 @@ class DinoGame {
             let canvasWidth, canvasHeight;
             
             if (isMobile) {
-                // Mobile: Use most of screen width with better aspect ratio
-                canvasWidth = Math.min(gameAreaWidth - 20, window.innerWidth - 40);
-                canvasHeight = Math.min(canvasWidth * 0.4, gameAreaHeight - 100); // 2.5:1 ratio but constrained by height
+                // Mobile: Full screen experience like other mobile games
+                const screenWidth = window.innerWidth;
+                const screenHeight = window.innerHeight;
                 
-                // Ensure minimum size for playability
-                if (canvasWidth < 300) canvasWidth = 300;
-                if (canvasHeight < 150) canvasHeight = 150;
+                // Use most of the screen but leave space for UI
+                const maxWidth = screenWidth - 40;
+                const maxHeight = screenHeight - 200; // Leave space for header and controls
+                
+                // Better aspect ratio for mobile (more square-like)
+                canvasWidth = Math.min(maxWidth, 600);
+                canvasHeight = Math.min(canvasWidth * 0.6, maxHeight);
+                
+                // Ensure minimum playable size
+                if (canvasWidth < 320) canvasWidth = 320;
+                if (canvasHeight < 200) canvasHeight = 200;
                 
                 // Scale factor for mobile
                 this.scaleFactor = canvasWidth / 1200;
@@ -159,14 +167,14 @@ class DinoGame {
     adjustGameForMobile() {
         const scaleFactor = this.scaleFactor;
         
-        // Adjust game speed for mobile (slightly slower for better mobile experience)
-        this.gameSpeed = 5 * scaleFactor;
+        // Mobile-optimized game speed (easier for touch controls)
+        this.gameSpeed = 4.5 * scaleFactor;
         
-        // Adjust dino position and size
-        this.dino.x = 50 * scaleFactor;
-        this.dino.y = (this.canvas.height - 50);
-        this.dino.width = 60 * scaleFactor;
-        this.dino.height = 70 * scaleFactor;
+        // Adjust dino position and size for mobile
+        this.dino.x = 40 * scaleFactor;
+        this.dino.y = (this.canvas.height - 45);
+        this.dino.width = 50 * scaleFactor;
+        this.dino.height = 60 * scaleFactor;
         
         // Adjust ground and cloud positions
         this.groundLines.forEach(line => {
@@ -174,16 +182,20 @@ class DinoGame {
         });
         
         this.clouds.forEach(cloud => {
-            cloud.y = Math.random() * (this.canvas.height * 0.2) + 20;
-            cloud.width = 60 * scaleFactor;
-            cloud.height = 20 * scaleFactor;
+            cloud.y = Math.random() * (this.canvas.height * 0.15) + 15;
+            cloud.width = 50 * scaleFactor;
+            cloud.height = 15 * scaleFactor;
         });
         
-        // Adjust jump power for mobile screen size
-        this.jumpPower = -12 * scaleFactor;
-        this.gravity = 0.8 * scaleFactor;
+        // Mobile-optimized physics (more forgiving jumps)
+        this.jumpPower = -10 * scaleFactor;
+        this.gravity = 0.6 * scaleFactor;
         
-        console.log('Mobile game adjusted with scale factor:', scaleFactor);
+        // Adjust obstacle spawn rate for mobile (fewer obstacles)
+        this.obstacleSpawnRate = 120; // Slower spawn rate
+        this.coinSpawnRate = 100; // Slower coin spawn
+        
+        console.log('Mobile game optimized with scale:', scaleFactor);
     }
     
     loadSprites() {
@@ -476,7 +488,8 @@ class DinoGame {
     }
     
     updateObstacles() {
-        if (this.frameCount % 100 === 0 && Math.random() < 0.6) {
+        const spawnRate = this.obstacleSpawnRate || 100;
+        if (this.frameCount % spawnRate === 0 && Math.random() < 0.5) {
             const types = ['cactus', 'cactus-large', 'bird'];
             const type = types[Math.floor(Math.random() * types.length)];
             
@@ -525,7 +538,7 @@ class DinoGame {
                 this.scoreElement.textContent = this.score;
                 
                 if (this.score % 10 === 0) {
-                    this.gameSpeed += 0.5 * this.scaleFactor;
+                    this.gameSpeed += 0.3 * this.scaleFactor;
                 }
             }
             
@@ -534,13 +547,14 @@ class DinoGame {
     }
     
     updateCoins() {
-        if (this.frameCount % 80 === 0 && Math.random() < 0.4) {
+        const spawnRate = this.coinSpawnRate || 80;
+        if (this.frameCount % spawnRate === 0 && Math.random() < 0.3) {
             const scaleFactor = this.scaleFactor || 1;
             const groundY = this.canvas.height - 3;
             this.coins.push({
                 x: this.canvas.width - 100,
                 y: Math.random() < 0.5 ? 
-                    (groundY - 120 * scaleFactor) : (groundY - 80 * scaleFactor),
+                    (groundY - 100 * scaleFactor) : (groundY - 60 * scaleFactor),
                 width: 20 * scaleFactor,
                 height: 20 * scaleFactor,
                 collected: false,
