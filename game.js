@@ -332,16 +332,23 @@ class DinoGame {
     setupChromeStyleMobileControls() {
         // Global touch listener - tap anywhere to jump
         document.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            console.log('Touch detected - jumping');
-            this.handleJump();
+            if (this.gameState === 'waiting' || this.gameState === 'playing' || this.gameState === 'gameOver') {
+                e.preventDefault();
+                this.handleJump();
+            }
+        }, { passive: false });
+        
+        document.addEventListener('touchend', (e) => {
+            // Handle duck release on mobile
+            if (this.dino.isDucking) {
+                this.handleDuck(false);
+            }
         }, { passive: false });
         
         // Also handle click events for desktop testing
         document.addEventListener('click', (e) => {
             // Only handle clicks on game area, not buttons
             if (e.target.closest('.game-area') && !e.target.closest('button')) {
-                console.log('Click detected - jumping');
                 this.handleJump();
             }
         });
